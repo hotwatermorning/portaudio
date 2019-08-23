@@ -3213,6 +3213,7 @@ static long asioMessages(long selector, long value, void* message, double* opt)
     switch(selector)
     {
         case kAsioSelectorSupported:
+            printf("kAsioSelectorSupported\n");
             if(value == kAsioResetRequest
             || value == kAsioEngineVersion
             || value == kAsioResyncRequest
@@ -3225,7 +3226,7 @@ static long asioMessages(long selector, long value, void* message, double* opt)
             break;
 
         case kAsioBufferSizeChange:
-            //printf("kAsioBufferSizeChange \n");
+            printf("kAsioBufferSizeChange \n");
             break;
 
         case kAsioResetRequest:
@@ -3240,6 +3241,7 @@ static long asioMessages(long selector, long value, void* message, double* opt)
                 http://www.portaudio.com/trac/ticket/108
             */
             //asioDriverInfo.stopped;  // In this sample the processing will just stop
+            printf("kAsioResetRequest\n");
             ret = 1L;
             break;
 
@@ -3250,6 +3252,7 @@ static long asioMessages(long selector, long value, void* message, double* opt)
             // Windows Multimedia system, which could loose data because the Mutex was hold too long
             // by another thread.
             // However a driver can issue it in other situations, too.
+            printf("kAsioResyncRequest\n");
             ret = 1L;
             break;
 
@@ -3258,13 +3261,14 @@ static long asioMessages(long selector, long value, void* message, double* opt)
             // Beware, it this does not mean that the buffer sizes have changed!
             // You might need to update internal delay data.
             ret = 1L;
-            //printf("kAsioLatenciesChanged \n");
+            printf("kAsioLatenciesChanged \n");
             break;
 
         case kAsioEngineVersion:
             // return the supported ASIO version of the host application
             // If a host applications does not implement this selector, ASIO 1.0 is assumed
             // by the driver
+            printf("kAsioEngineVersion\n");
             ret = 2L;
             break;
 
@@ -3273,6 +3277,7 @@ static long asioMessages(long selector, long value, void* message, double* opt)
             // is supported.
             // For compatibility with ASIO 1.0 drivers the host application should always support
             // the "old" bufferSwitch method, too.
+            printf("kAsioSupportsTimeInfo\n");
             ret = 1;
             break;
 
@@ -3280,6 +3285,7 @@ static long asioMessages(long selector, long value, void* message, double* opt)
             // informs the driver wether application is interested in time code info.
             // If an application does not need to know about time code, the driver has less work
             // to do.
+            printf("kAsioSuportsTimeCode\n");
             ret = 0;
             break;
     }
