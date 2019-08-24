@@ -86,6 +86,7 @@
 #include <string.h>
 //#include <values.h>
 #include <new>
+#include <atomic>
 
 #include <windows.h>
 #include <mmsystem.h>
@@ -152,6 +153,10 @@
  all dependence on it.
 */
 extern AsioDrivers* asioDrivers;
+
+/* the window handle used for opening an ASIO control panel.
+ */
+std::atomic<void *> windowHandleForAsioControlPanel;
 
 
 /* We are trying to be compatible with CARBON but this has not been thoroughly tested. */
@@ -909,6 +914,15 @@ typedef struct PaAsioDeviceInfo
 }
 PaAsioDeviceInfo;
 
+void * PaAsio_SetWindowHandle(void *windowHandle)
+{
+    return windowHandleForAsioControlPanel.exchange(windowHandle);
+}
+
+void * PaAsio_GetWindowHandle()
+{
+    return windowHandleForAsioControlPanel.load();
+}
 
 PaError PaAsio_GetAvailableBufferSizes( PaDeviceIndex device,
         long *minBufferSizeFrames, long *maxBufferSizeFrames, long *preferredBufferSizeFrames, long *granularity )
@@ -1239,10 +1253,14 @@ PaError PaAsio_Initialize( PaUtilHostApiRepresentation **hostApi, PaHostApiIndex
     (*hostApi)->info.name = "ASIO";
     (*hostApi)->info.deviceCount = 0;
 
+    if(auto handle = PaAsio_GetWindowHandle()) {
+        asioHostApi->systemSpecific = handle;
+    } else {
     #ifdef WINDOWS
         /* use desktop window as system specific ptr */
         asioHostApi->systemSpecific = GetDesktopWindow();
     #endif
+    }
 
     /* driverCount is the number of installed drivers - not necessarily
         the number of installed physical devices. */
@@ -4135,6 +4153,40 @@ error:
 	}
 
     PaWinUtil_CoUninitialize( paASIO, &comInitializationResult );
+
+    return result;
+}
+
+PaError PaAsio_ShowControlPanelForCurrentDevice()
+{
+    PaError result = paNoError;
+    PaUtilHostApiRepresentation *hostApi;
+    ASIOError asioError;
+    PaAsioHostApiRepresentation *asioHostApi;
+    
+    result = PaUtil_GetHostApiRepresentation( &hostApi, paASIO );
+    if( result != paNoError )
+        return result;
+
+    asioHostApi = (PaAsioHostApiRepresentation*)hostApi;
+    if( asioHostApi->openAsioDeviceIndex == paNoDevice ) {
+        return paDeviceUnavailable;
+    }
+
+    if( asioHostApi->systemSpecific == nullptr ) {
+        return paUnanticipatedHostError;
+    }
+
+    asioError = ASIOControlPanel();
+    if( asioError != ASE_OK )
+    {
+        PA_DEBUG(("PaAsio_ShowControlPanel: ASIOControlPanel(): %s\n", PaAsio_GetAsioErrorText(asioError) ));
+        result = paUnanticipatedHostError;
+        PA_ASIO_SET_LAST_ASIO_ERROR( asioError );
+        return result;
+    }
+
+    PA_DEBUG(("PaAsio_ShowControlPanel: ASIOControlPanel(): %s\n", PaAsio_GetAsioErrorText(asioError) ));
 
     return result;
 }

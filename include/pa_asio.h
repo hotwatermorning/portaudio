@@ -51,6 +51,16 @@ extern "C"
 {
 #endif /* __cplusplus */
 
+/** Set a window handle which is used for opening asio control panel.
+ @return the previous window handle.
+ @note: this function must be called before Pa_Initialize()
+ */
+void * PaAsio_SetWindowHandle(void *windowHandle);
+
+/** Set the window handle which is used for opening asio control panel.
+ @return the window handle.
+*/
+void * PaAsio_GetWindowHandle();
 
 /** Retrieve legal native buffer sizes for the specificed device, in sample frames.
 
@@ -86,6 +96,11 @@ PaError PaAsio_GetAvailableBufferSizes( PaDeviceIndex device,
 */
 PaError PaAsio_ShowControlPanel( PaDeviceIndex device, void* systemSpecific );
 
+/** Display the ASIO control panel for the current device.
+ While PaAsio_ShowControlPanel(PaDeviceIndex, void*) can be invoked if no asio device is loaded,
+ this function can be invoked if an asio device is loaded, and display ASIO control panel for the device.
+*/
+PaError PaAsio_ShowControlPanelForCurrentDevice();
 
 
 
